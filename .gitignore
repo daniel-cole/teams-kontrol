@@ -1,0 +1,4 @@
+.idea/
+bin/
+kubeconfig.yml
+.envrc

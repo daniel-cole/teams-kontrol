@@ -1,0 +1,7 @@
+verbs:
+  - "get"
+  - "describe"
+namespaces:
+  - "default"
+resources:
+  - "pods"

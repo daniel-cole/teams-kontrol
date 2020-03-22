@@ -1,0 +1,96 @@
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: teams-kontrol
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: teams-kontrol
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: teams-kontrol
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: teams-kontrol
+subjects:
+  - kind: ServiceAccount
+    name: teams-kontrol
+    namespace: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: permissions
+data:
+  permissions.yml: |
+    verbs:
+      - "get"
+      - "delete"
+    namespaces:
+      - "default"
+    resources:
+      - "pods"
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: teams-kontrol
+  labels:
+    app: teams-kontrol
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teams-kontrol
+  template:
+    metadata:
+      labels:
+        app: teams-kontrol
+    spec:
+      serviceAccountName: teams-kontrol
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      restartPolicy: Always
+      containers:
+        - name: teams-kontrol
+          ports:
+            - containerPort: 9000
+          imagePullPolicy: IfNotPresent
+          image: teams-kontrol:dev
+          env:
+            - name: TEAMS_KONTROL_LOG_LEVEL
+              value: "DEBUG"
+            - name: TEAMS_KONTROL_SHARED_SECRET
+              value: "c2VjcmV0"
+            - name: TEAMS_KONTROL_PERMISSION_FILE
+              value: "/permissions/permissions.yml"
+            - name: TEAMS_KONTROL_INSECURE_COMMANDS
+              value: "TRUE"
+          resources:
+            requests:
+              cpu: 64m
+              memory: 64m
+          volumeMounts:
+            - name: permissions
+              mountPath: /permissions
+      volumes:
+        - name: permissions
+          configMap:
+            name: permissions

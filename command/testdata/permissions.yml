@@ -1,0 +1,11 @@
+verbs:
+  - "get"
+  - "describe"
+  - "delete"
+namespaces:
+  - "default"
+  - "redis"
+  - "nginx"
+resources:
+  - "pods"
+  - "pod"
